@@ -63,7 +63,7 @@ jobs:
         run: |
           mkdir -p ../artifacts
           tar --exclude=node_modules --exclude=dist --exclude=.next --exclude=.wrangler -czf ../artifacts/source.tar.gz .
-          tar -czf ../artifacts/deployment.tar.gz -C dist .
+          bash scripts/package-site.sh . ../artifacts/deployment.tar.gz
           cp build-commit-sha.txt ../artifacts/
       - uses: actions/upload-artifact@v4
         with:
