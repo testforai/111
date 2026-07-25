@@ -11,6 +11,10 @@ on:
 permissions:
   contents: write
 
+concurrency:
+  group: lingxing-console-linux
+  cancel-in-progress: true
+
 jobs:
   build:
     runs-on: ubuntu-24.04
