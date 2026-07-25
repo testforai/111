@@ -1,0 +1,28 @@
+name: lingxing-platform-linux-ci
+on:
+  push:
+    branches: [lingxing-openapi-console]
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-24.04
+    defaults:
+      run:
+        working-directory: lingxing-platform
+    steps:
+      - uses: actions/checkout@v4
+      - name: Backend tests
+        run: |
+          cd backend
+          python3 -m venv .venv
+          .venv/bin/pip install -e '.[test]'
+          SECRET_KEY=$(printf 'x%.0s' {1..64}) CREDENTIAL_MASTER_KEY=a2tra2tra2tra2tra2tra2tra2tra2tra2tra2tra2s= ADMIN_PASSWORD=change-this-admin .venv/bin/pytest -q
+      - name: Frontend build
+        run: |
+          cd frontend
+          npm install
+          npm run build
+      - name: Compose validation
+        run: |
+          cp .env.example .env
+          docker compose config >/dev/null
