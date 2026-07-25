@@ -1,0 +1,3 @@
+import{access,cp,mkdir,rm}from"node:fs/promises";import{resolve}from"node:path";
+async function exists(path){try{await access(path);return true}catch(e){if(e.code==="ENOENT")return false;throw e}}
+export function sites(){let root=process.cwd();return{name:"sites",apply:"build",configResolved(c){root=c.root},async closeBundle(){const out=resolve(root,"dist",".openai"),cfg=resolve(root,".openai","hosting.json");await rm(out,{recursive:true,force:true});await mkdir(out,{recursive:true});if(await exists(cfg))await cp(cfg,resolve(out,"hosting.json"));}}}
