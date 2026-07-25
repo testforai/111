@@ -10,7 +10,7 @@ function base64ToBytes(value: string) {
   return Uint8Array.from(raw, (ch) => ch.charCodeAt(0));
 }
 async function key() {
-  const secret = env.CREDENTIAL_ENCRYPTION_KEY;
+  const secret = (env as unknown as { CREDENTIAL_ENCRYPTION_KEY: string }).CREDENTIAL_ENCRYPTION_KEY;
   if (!secret || secret.length < 32) throw new Error("CREDENTIAL_ENCRYPTION_KEY is not configured");
   return crypto.subtle.importKey("raw", new TextEncoder().encode(secret).slice(0, 32), "AES-GCM", false, ["encrypt","decrypt"]);
 }
