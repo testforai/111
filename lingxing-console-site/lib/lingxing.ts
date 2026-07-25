@@ -160,7 +160,7 @@ export async function callEndpoint(userEmail: string, endpoint: EndpointDefiniti
       const timestamp = String(Math.floor(Date.now() / 1000));
       const auth: Record<string, unknown> = { app_key: p.appId, access_token: token, timestamp };
       const signing = { ...input, ...auth };
-      const query = new URLSearchParams(Object.entries({ ...auth, sign: sign(p.appId, signing) }).map(([k, v]) => [k, String(v)]));
+      const signature = sign(p.appId, signing);\n      const queryValues = endpoint.method === "GET" ? { ...input, ...auth, sign: signature } : { ...auth, sign: signature };\n      const query = new URLSearchParams(Object.entries(queryValues).map(([k, v]) => [k, v && typeof v === "object" ? stable(v) : String(v)]));
       const response = await fetch(p.host + endpoint.route + "?" + query.toString(), {
         method: endpoint.method,
         headers: endpoint.method === "POST" ? { "Content-Type": "application/json" } : undefined,
