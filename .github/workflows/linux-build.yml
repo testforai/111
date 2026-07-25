@@ -17,10 +17,12 @@ jobs:
       - run: npm run build
       - name: Verify report output
         run: |
-          test -f dist/index.html
-          test -d dist/assets
-          grep -R "跨境平台二次开发项目雷达" dist
-          if grep -R -n -E "\?\?\?\?|�" dist; then exit 1; fi
+          test -f dist/server/index.js
+          test -d dist/client/assets
+          test -f dist/.openai/hosting.json
+          grep -q "跨境平台二次开发项目全景报告" app/page.jsx
+          grep -q '"uniqueRepositories":1358' src/data/repos.json
+          if grep -R -n -E "\?\?\?\?|�" app src dist/client; then exit 1; fi
       - uses: actions/upload-artifact@v4
         with:
           name: marketplace-report-dist
