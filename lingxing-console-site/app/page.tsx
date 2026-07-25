@@ -11,6 +11,13 @@ type HistoryItem = {
   id:string; endpointId:string; route:string; method:string; status:string; responseCode:string|null;
   durationMs:number; errorMessage:string|null; createdAt:number;
 };
+type ErrorResponse = { error?:string };
+type ProfileResponse = ErrorResponse & { configured?:boolean; profile?:{ appId?:string } };
+type HistoryResponse = ErrorResponse & { items?:HistoryItem[] };
+type CallResponse = ErrorResponse & Record<string,unknown>;
+async function readJson<T>(response:Response):Promise<T> {
+  return await response.json() as T;
+}
 const endpoints = catalog.endpoints as Endpoint[];
 const modules = catalog.modules as Array<{id:string;name:string;count:number}>;
 
@@ -76,7 +83,7 @@ export default function ConsolePage() {
     setBusy(true); setProfileMessage("");
     try {
       const r = await fetch("/api/profile", { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({appId,appSecret}) });
-      const data = await r.json();
+      const data = await readJson<ErrorResponse>(r);
       if (!r.ok) throw new Error(data.error || "保存失败");
       setConfigured(true); setAppSecret("");
       setProfileMessage("凭据已加密保存，正在验证认证…");
@@ -103,7 +110,7 @@ export default function ConsolePage() {
         method:"POST", headers:{"Content-Type":"application/json"},
         body:JSON.stringify({endpointId:selected.id,input,confirmedWrite:confirmWrite})
       });
-      const data = await r.json();
+      const data = await readJson<CallResponse>(r);
       if (!r.ok) throw new Error(data.error || "调用失败");
       setResponse(data);
       loadHistory();
@@ -112,7 +119,7 @@ export default function ConsolePage() {
   }
   async function loadHistory() {
     const r = await fetch("/api/history");
-    const data = await r.json();
+    const data = await readJson<HistoryResponse>(r);
     if (r.ok) setHistory(data.items || []);
   }
   function openHistory() { setTab("history"); loadHistory(); }
