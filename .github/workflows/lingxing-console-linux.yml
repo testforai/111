@@ -1,0 +1,69 @@
+name: lingxing-console-linux
+
+on:
+  push:
+    branches: [lingxing-openapi-console]
+    paths:
+      - "lingxing-console-site/**"
+      - ".github/workflows/lingxing-console-linux.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    defaults:
+      run:
+        working-directory: lingxing-console-site
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: lingxing-openapi-console
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Generate pinned SDK catalog and lockfile
+        run: |
+          python3 scripts/generate_catalog.py
+          npm install --package-lock-only --ignore-scripts --no-audit --no-fund
+          npm ci --ignore-scripts --no-audit --no-fund
+          npx drizzle-kit generate
+      - name: Persist Linux-generated artifacts
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add package-lock.json generated/endpoints.json drizzle
+          if ! git diff --cached --quiet; then
+            git commit -m "chore: persist Linux-generated console artifacts [skip ci]"
+            git push origin HEAD:lingxing-openapi-console
+          fi
+          git rev-parse HEAD > build-commit-sha.txt
+      - name: Build and validate on Linux
+        run: |
+          npx vinext build
+          npx tsc --noEmit
+          node --test tests/catalog.test.mjs
+          test -f dist/server/index.js
+          test -d dist/client/assets
+          test -f dist/.openai/hosting.json
+          test -d dist/.openai/drizzle
+          grep -q '"d1":"DB"' dist/.openai/hosting.json
+          if grep -R -n -E "\?\?\?\?|�" app generated; then exit 1; fi
+      - name: Package exact validated source and deployment
+        run: |
+          tar --exclude=node_modules --exclude=dist --exclude=.next --exclude=.wrangler -czf source.tar.gz .
+          tar -czf deployment.tar.gz -C dist .
+      - uses: actions/upload-artifact@v4
+        with:
+          name: lingxing-console-build
+          path: |
+            lingxing-console-site/deployment.tar.gz
+            lingxing-console-site/source.tar.gz
+            lingxing-console-site/build-commit-sha.txt
+          retention-days: 7
