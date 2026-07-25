@@ -56,7 +56,7 @@ export default function ConsolePage() {
   const selected = endpoints.find((item) => item.id === selectedId) || filtered[0] || endpoints[0];
 
   useEffect(() => {
-    fetch("/api/profile").then((r) => r.json()).then((data) => {
+    fetch("/api/profile").then((r) => readJson<ProfileResponse>(r)).then((data) => {
       setConfigured(Boolean(data.configured));
       if (data.profile?.appId) setAppId(data.profile.appId);
       if (!data.configured) setShowSetup(true);
@@ -81,7 +81,7 @@ export default function ConsolePage() {
       setConfigured(true); setAppSecret("");
       setProfileMessage("凭据已加密保存，正在验证认证…");
       const test = await fetch("/api/connection", { method:"POST" });
-      const testData = await test.json();
+      const testData = await readJson<ErrorResponse>(test);
       if (!test.ok) throw new Error(testData.error || "认证失败");
       setProfileMessage("连接成功，Token 已安全缓存");
       window.setTimeout(() => setShowSetup(false),700);
