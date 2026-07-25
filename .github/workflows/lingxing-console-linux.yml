@@ -61,13 +61,15 @@ jobs:
           if grep -R -n -E "\?\?\?\?|�" app generated; then exit 1; fi
       - name: Package exact validated source and deployment
         run: |
-          tar --exclude=node_modules --exclude=dist --exclude=.next --exclude=.wrangler -czf source.tar.gz .
-          tar -czf deployment.tar.gz -C dist .
+          mkdir -p ../artifacts
+          tar --exclude=node_modules --exclude=dist --exclude=.next --exclude=.wrangler -czf ../artifacts/source.tar.gz .
+          tar -czf ../artifacts/deployment.tar.gz -C dist .
+          cp build-commit-sha.txt ../artifacts/
       - uses: actions/upload-artifact@v4
         with:
           name: lingxing-console-build
           path: |
-            lingxing-console-site/deployment.tar.gz
-            lingxing-console-site/source.tar.gz
-            lingxing-console-site/build-commit-sha.txt
+            artifacts/deployment.tar.gz
+            artifacts/source.tar.gz
+            artifacts/build-commit-sha.txt
           retention-days: 7
