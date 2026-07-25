@@ -196,8 +196,8 @@ export default function ConsolePage() {
           </section>
 
           <section className="panel responsePanel">
-            <div className="panelTitle"><div><span>响应结果</span><small>自动脱敏</small></div>{response&&<button className="copy" onClick={()=>navigator.clipboard.writeText(JSON.stringify(response,null,2))}>复制 JSON</button>}</div>
-            {response ? <pre>{JSON.stringify(response,null,2)}</pre> : <div className="responseEmpty"><span>{ }</span><strong>等待发送请求</strong><small>返回数据将在这里以 JSON 格式展示</small></div>}
+            <div className="panelTitle"><div><span>响应结果</span><small>自动脱敏</small></div>{response!==null&&<button className="copy" onClick={()=>navigator.clipboard.writeText(JSON.stringify(response,null,2))}>复制 JSON</button>}</div>
+            {response ? <pre>{JSON.stringify(response,null,2)}</pre> : <div className="responseEmpty"><span>{"{}"}</span><strong>等待发送请求</strong><small>返回数据将在这里以 JSON 格式展示</small></div>}
           </section>
         </div>
       </section>
