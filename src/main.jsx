@@ -17,7 +17,7 @@ const curated=[
 {name:"Cloud-Dev77/Amazon_Seller_Data_Extract",platform:"Amazon",type:"业务程序",grade:"B",fit:71,title:"Amazon Ads 报告中间件",summary:"Flask 应用，包含 OAuth、Token/Profile 缓存、SP/SD 广告报表与 Power BI 接入。",use:"参考广告报表下载和 BI 输出",risk:"工程体量较小，生产可靠性待验证",tags:["Flask","Amazon Ads","Power BI"]},
 {name:"SHCSCA/amazon-ai-ops",platform:"Amazon",type:"业务程序",grade:"B",fit:79,title:"领星驱动的 Amazon AI Ops 工作台",summary:"将报表采集、广告诊断、AI 建议、人工审批和执行回读串成审计闭环。",use:"参考业务流程、审批、证据和 UI 信息架构",risk:"项目自标 APP_NEEDS_WORK，且 Windows 桌面架构不适合作为本项目底座",tags:["Electron","React","审批","审计"]},
 {name:"lineofflight/peddler",platform:"Amazon",type:"SDK/API",grade:"B",fit:78,title:"Python SP-API 客户端",summary:"长期存在的 Amazon API Python 客户端，可与其他 Python SDK 交叉对比。",use:"用于端点实现和兼容性参考",risk:"需核对 MWS 历史代码与当前 SP-API 边界",tags:["Python","SP-API"]},
-{name:"hendt/ebay-api",platform:"eBay",type:"SDK/API",grade:"A",fit:94,title:"eBay TypeScript 全接口客户端",summary:"同时覆盖 REST 与传统 XML API，包含 Sell、Buy、Commerce、Trading、OAuth 与数字签名。",use:"首选 eBay Linux 后端 SDK 候选",risk:"浏览器代理示例不应进入生产密钥链路",tags:["TypeScript","Sell API","Trading API","OAuth"]},
+{"name":"hendt/ebay-api","platform":"eBay","type":"SDK/API","grade":"A","fit":94,"title":"eBay TypeScript 10.x REST / Trading 客户端","summary":"支持 Buy Browse 搜索、Inventory/Trading 刊登及 Stores 店铺分类；OAuth2、传统 XML 与数字签名仍保留。10.x 已移除 Finding 和 Sell Compliance，不能再称全接口覆盖。","use":"有条件保留 A 级，优先作为 Node.js 22+ 的 eBay Linux 后端适配层；上线前完成 10.x 调用点迁移与授权回归","risk":"须选含 #221 修复的可验证制品并锁定依赖；10.0.2 为仓库版本，尚未确认对应 GitHub Release。零漏洞是 PR 当时报告；浏览器代理示例不应进入生产密钥链路","tags":["TypeScript","10.x","Browse","Inventory","Trading","Stores","OAuth2"]},
 {name:"YosefHayim/ebay-mcp",platform:"eBay",type:"MCP",grade:"A",fit:90,title:"eBay 全接口 MCP",summary:"README 声明 322 个工具、覆盖 Sell API 的库存、履约、营销、分析和开发者能力。",use:"作为接口覆盖清单和 AI 工具层参考",risk:"不能替代 ERP 后端快照、权限与 api_call_logs",tags:["MCP","TypeScript","322 tools","MIT"]},
 {name:"hoiung/ebay-seller-tool",platform:"eBay",type:"业务程序",grade:"A",fit:89,title:"真实卖家 Listing 管理工具",summary:"支持创建/修改刊登、批量描述、图片上传、活动 Listing、Best Offer 和竞品价格。",use:"参考 Listing 工作流、dry-run 与字段校验",risk:"部分运营规则来自私有 overlay，公开版并非完整系统",tags:["Python","MCP","Listing","Dry-run"]},
 {name:"timotheus/ebaysdk-python",platform:"eBay",type:"SDK/API",grade:"B",fit:82,title:"Python eBay SDK",summary:"Python 生态常用 eBay SDK，可用于传统 API 与部分业务调用。",use:"Python 技术栈备选",risk:"需核对新 Sell API 的覆盖程度",tags:["Python","SDK"]},
@@ -64,6 +64,29 @@ function App(){
       <p>{x.summary}</p><div className="fact good"><strong>建议用途</strong>{x.use}</div><div className="fact risk"><strong>主要风险</strong>{x.risk}</div>
       <div className="tags">{x.tags.map(t=><span key={t}>{t}</span>)}</div>
     </article>)}</div>
+   </section>
+
+   <section id="ebay-sdk-review" className="section">
+    <div className="section-head"><div><p className="eyebrow">EBAY SDK · 2026-10-21 定向复核</p><h2>hendt/ebay-api：有条件保留 A 级推荐</h2></div><p>仅复核该候选；全库扫描仍为 2026-07-25，仓库数量、搜索统计和其他候选不变。94/100 沿用原评估分，不代表重新量化评分。</p></div>
+    <div className="fact good"><strong>选型判断</strong>REST 与传统 Trading、OAuth2 和数字签名仍可复用，适合 Linux / Node.js 22+ 的 ERP 平台适配层。移除停用接口并不否定核心刊登能力；A 级表示优先技术审计候选，须通过迁移、权限和业务回归后才能上线，不能视作完整 ERP 或安全认证。</div>
+    <div className="table-wrap"><table><thead><tr><th>能力</th><th>10.x 已核实边界</th><th>替代路径与迁移成本（工程判断）</th></tr></thead><tbody>
+     <tr><td>商品搜索</td><td>移除 eBay.finding；使用 eBay.buy.browse.search / getItem。Browse 的 addItem、removeItem、updateQuantity、getShoppingCart 也已移除，不能把购物车方法当成刊登库存管理。</td><td>Finding → Browse 不是简单改名：重做筛选、分页、商品 ID 与响应字段映射，核对 marketplace、OAuth scope、生产访问资格及限额；不保证历史搜索语义等价。已有 Finding 依赖的项目成本中高，新项目直接按 Browse 建模。</td></tr>
+     <tr><td>Listing 管理</td><td>Inventory 保留 createOrReplaceInventoryItem、createOffer / updateOffer、publishOffer / withdrawOffer、bulkUpdatePriceQuantity；Trading 保留 AddFixedPriceItem、ReviseFixedPriceItem、EndFixedPriceItem 等。Sell Listing 当前仅封装 createItemDraft，不能描述为完整刊登 CRUD。</td><td>新刊登使用 SKU → Inventory Item → Offer → 发布流程，并配置库存地点、类目和业务政策。旧 Trading 刊登可继续按该路径管理；若转 Inventory，先验证 bulkMigrateListing 的资格和数据映射。eBay 文档规定 Inventory 创建的刊登应由 Inventory 修改，不能假定可与 Seller Hub / Trading 任意混用。跨模型迁移成本中高。</td></tr>
+     <tr><td>店铺接口</td><td>新增 eBay.sell.stores：getStore、getStoreCategories、addStoreCategory、renameStoreCategory、deleteStoreCategory、moveStoreCategory、getStoreTask / getStoreTasks。</td><td>支持店铺信息读取与分类维护，不等于完整店铺装修、订阅或运营系统。分类移动为异步任务，需要状态轮询、分类 ID 映射和写操作审计；新增集成成本中等。</td></tr>
+     <tr><td>身份认证</td><td>保留 OAuth2 client credentials（应用令牌）、authorization code（卖家用户令牌）、刷新机制、传统 Auth'N'Auth / IAF 及数字签名；发布说明称鉴权与配置公共接口不变。</td><td>公共应用数据按端点要求使用应用令牌；卖家数据和写操作需要用户授权及对应 scope，Auth'N'Auth 仅适用于传统 API。ERP 仍须实现 RuName 回调与 state 校验、令牌加密和按店铺隔离、刷新结果持久化、撤权处理；按端点核对签名要求。已有标准 OAuth2 接入成本通常较低，扩 scope 需重新授权。</td></tr>
+     <tr><td>合规与其他旧调用</td><td>Sell Compliance 及 getListingViolations / getListingViolationsSummary 已移除，迁移说明未给出等价替代。Sell Account v1 的七个库存地点方法应转 eBay.sell.inventory。另移除若干 Buy、Catalog、Marketing、Metadata 及 29 个 Post-Order 方法。</td><td>逐项盘点调用和类型引用，不能宣称合规巡检仍完整可用；没有已核实替代的功能需重新评估业务方案。notification.test 改为 testSubscription；自定义 IEBayApiRequest 必须补 patch；核验请求头优先级、上传、PDF 返回及 finances 参数变动。成本取决于实际调用清单，不按版本号推断无痛升级。</td></tr>
+    </tbody></table></div>
+    <div className="fact risk"><strong>版本与安全证据</strong>2026-07-29 正式发布 v10.0.0，刷新 REST OpenAPI 并新增 Stores / Account v2。2026-10-12 合并 PR #221；PR 声明解决 11 项依赖问题（1 严重、5 高危、5 中危），并报告 npm audit 为 0、1371 项测试通过。直接升级包括 axios ^1.20.0、qs ^6.16.0 和开发测试依赖 vitest；同时刷新传递依赖锁文件，src/request.ts 有 Axios 类型适配。以上是上游当时的报告，本次未独立重跑，不能推导所有问题均影响生产，也不能保证今天或下游安装仍零漏洞。</div>
+    <p>2026-10-14 提交 2e0ed33 将 package.json 标为 10.0.2，且该提交位于 #221 合并之后；本次 GitHub Releases 列表仍仅见 v10.0.0 与 v7.0.0，未确认 10.0.2 正式 GitHub Release，也未验证 npm 发布制品。投产前验证制品确含安全修复、锁定版本与依赖，在自身安装树重跑依赖检查及搜索、刊登、店铺分类、授权刷新回归；仓库锁文件不会自动成为下游项目的锁文件。</p>
+    <p>核验来源：
+     <a href="https://github.com/hendt/ebay-api/releases/tag/v10.0.0" target="_blank" rel="noreferrer">v10.0.0 发布说明</a> ·
+     <a href="https://github.com/hendt/ebay-api/blob/2e0ed33e234da271f9edccd71a4bb206f7ccbde8/README.md#migrating-from-v9-to-v10" target="_blank" rel="noreferrer">迁移与鉴权说明</a> ·
+     <a href="https://github.com/hendt/ebay-api/tree/2e0ed33e234da271f9edccd71a4bb206f7ccbde8/src/api" target="_blank" rel="noreferrer">接口实现</a> ·
+     <a href="https://github.com/hendt/ebay-api/pull/221" target="_blank" rel="noreferrer">安全 PR #221</a> ·
+     <a href="https://github.com/hendt/ebay-api/blob/2e0ed33e234da271f9edccd71a4bb206f7ccbde8/package.json" target="_blank" rel="noreferrer">10.0.2 版本与运行时</a> ·
+     <a href="https://github.com/hendt/ebay-api/releases" target="_blank" rel="noreferrer">Release 列表</a> ·
+     <a href="https://developer.ebay.com/api-docs/sell/inventory/overview.html" target="_blank" rel="noreferrer">eBay Inventory 官方边界</a>
+    </p>
    </section>
    <section className="architecture"><div><p className="eyebrow">RECOMMENDED ARCHITECTURE</p><h2>开源项目应被放在正确的层</h2></div><div className="layers">
     <article><span>01</span><h3>平台适配层</h3><p>Amazon SP-API、eBay Sell/Trading API、领星 OpenAPI SDK。仅负责鉴权、限流、分页和字段映射。</p></article>
